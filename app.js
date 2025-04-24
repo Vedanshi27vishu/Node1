@@ -1,34 +1,34 @@
-const express= require('express');
-const { connectToMongoDB }= require("./connect.js");
-const urlRoute= require('./routes/url.js');
-const { applyTimestamps } = require('./models/url.js');
- 
-const app= express();
-const PORT= 8001;
+require('dotenv').config(); // 👈 for .env
 
+const express = require('express');
+const mongoose = require("mongoose");
+const urlRoute = require('./routes/url.js');
 const noteRoutes = require("./routes/upload.js");
 
-connectToMongoDB('mongodb://localhost:27017/short-url').then(()=>console.log("Mongodb connected!"));
+const app = express();
+const PORT = process.env.PORT || 8001;
 
-app.use(express.json())
+// ✅ MongoDB Atlas connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => {
+  console.log("✅ MongoDB Atlas connected!");
+})
+.catch((err) => {
+  console.error("❌ MongoDB Error:", err.message);
+});
 
+app.use(express.json());
+
+// ✅ Routes
 app.use("/", urlRoute);
-
 app.use("/", noteRoutes);
 
-// app.get('/:shortId',async(req,res)=>{
-//   const shortId= req.params.shortId;
-//   await URL.findOneAndUpdate({
-//     shortId
-//   },{
-//     $push:{
-//       visitHistory: {
-//         timestamp: Date.now(),
-//       }
-//     },
-//   });
-//   res.redirect(entry.redirectURL);
+// ✅ Optional: serve uploaded files
+app.use("/uploads", express.static("uploads"));
 
-// });
-
-app.listen(PORT, ()=>console.log(`Server Started at PORT`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server Started on PORT ${PORT}`);
+});
